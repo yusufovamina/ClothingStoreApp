@@ -1,5 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const ProductListScreen = () => (
   <View style={styles.container}>
@@ -13,7 +15,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F7F7FC',
-    padding: 24,
+    padding: SCREEN_WIDTH * 0.06,
   },
   text: {
     fontSize: 16,

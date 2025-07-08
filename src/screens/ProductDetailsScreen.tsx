@@ -1,50 +1,56 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useRoute } from '@react-navigation/native';
-
-const defaultProduct = {
-  id: '2',
-  title: 'Light Dress Bless',
-  category: 'Dress modern',
-  price: 162.99,
-  oldPrice: 190.99,
-  rating: 5.0,
-  reviews: 7932,
-  image: require('../../assets/images/1.png'),
-  description:
-    'Its simple and elegant shape makes it perfect for those of you who like you who want minimalist clothes.',
-  sizes: ['S', 'M', 'L', 'XL'],
-  colors: ['#000', '#E5C9A8', '#D9D9D9'],
-};
+import { useCart } from '../CartContext';
+import { useFavourites } from '../FavouritesContext';
+import { RouteProp } from '@react-navigation/native';
+import { HomeStackParamList } from '../navigation/HomeStack';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 export default function ProductDetailsScreen() {
-  const route = useRoute();
-  const product = route.params?.product || defaultProduct;
-  const [selectedSize, setSelectedSize] = useState('M');
-  const [selectedColor, setSelectedColor] = useState(product.colors ? product.colors[0] : '#000');
-  const [quantity, setQuantity] = useState(1);
+  const { addToCart } = useCart();
+  const { isFavourite, toggleFavourite } = useFavourites();
+  const route = useRoute<RouteProp<HomeStackParamList, 'ProductDetails'>>();
+  const product = route.params.product;
+  const [selectedSize, setSelectedSize] = useState<string>(product.sizes ? product.sizes[0] : 'M');
+  const [selectedColor, setSelectedColor] = useState<string>(product.colors ? product.colors[0] : '#000');
+  const [quantity, setQuantity] = useState<number>(1);
   const [readMore, setReadMore] = useState(false);
+  const navigation = useNavigation();
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
-      {/* Image and favorite icon */}
-      <View style={styles.imageWrapper}>
-        <Image source={product.image} style={styles.image} resizeMode="cover" />
-        <TouchableOpacity style={styles.favoriteBtn}>
-          <Text style={{ fontSize: 22, color: '#222' }}>♡</Text>
+      {/* Image and overlay buttons */}
+      <View style={styles.imageWrapperLarge}>
+        <Image source={product.image} style={styles.imageLarge} resizeMode="cover" />
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#222" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.favoriteBtn} onPress={() => toggleFavourite(product.id)}>
+          <Text style={{ fontSize: 22, color: isFavourite(product.id) ? '#E53935' : '#222' }}>{isFavourite(product.id) ? '♥' : '♡'}</Text>
         </TouchableOpacity>
       </View>
-      {/* Title, rating, reviews, price */}
+      {/* Info section */}
       <View style={styles.infoSection}>
-        <Text style={styles.title}>{product.title}</Text>
+        {/* Title and quantity row */}
+        <View style={styles.titleQtyRow}>
+          <Text style={styles.title}>{product.title}</Text>
+          <View style={styles.qtyRowInline}>
+            <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(Math.max(1, quantity - 1))}>
+              <Text style={styles.qtyBtnText}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.qtyText}>{quantity}</Text>
+            <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(quantity + 1)}>
+              <Text style={styles.qtyBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        {/* Rating and reviews */}
         <View style={styles.ratingRow}>
           <Text style={styles.star}>★</Text>
           <Text style={styles.rating}>{product.rating}</Text>
           <Text style={styles.reviews}>({product.reviews?.toLocaleString() || '0'} reviews)</Text>
-        </View>
-        <View style={styles.priceRow}>
-          <Text style={styles.price}>${product.price}</Text>
-          <Text style={styles.oldPrice}>${product.oldPrice}</Text>
         </View>
         {/* Description */}
         <Text style={styles.desc} numberOfLines={readMore ? undefined : 2}>
@@ -54,10 +60,10 @@ export default function ProductDetailsScreen() {
           )}
         </Text>
         {/* Size selector */}
-        <View style={styles.selectorRow}>
+        <View style={styles.selectorBlock}>
           <Text style={styles.selectorLabel}>Choose Size</Text>
-          <View style={styles.sizeRow}>
-            {(product.sizes || ['M']).map((size) => (
+          <View style={styles.sizeRowBlock}>
+            {(product.sizes || ['M']).map((size: string) => (
               <TouchableOpacity
                 key={size}
                 style={[styles.sizeBtn, selectedSize === size && styles.sizeBtnActive]}
@@ -69,10 +75,10 @@ export default function ProductDetailsScreen() {
           </View>
         </View>
         {/* Color selector */}
-        <View style={styles.selectorRow}>
+        <View style={styles.selectorBlock}>
           <Text style={styles.selectorLabel}>Color</Text>
-          <View style={styles.colorRow}>
-            {(product.colors || ['#000']).map((color) => (
+          <View style={styles.colorRowBlock}>
+            {(product.colors || ['#000']).map((color: string) => (
               <TouchableOpacity
                 key={color}
                 style={[styles.colorCircle, { backgroundColor: color }, selectedColor === color && styles.colorCircleActive]}
@@ -81,20 +87,31 @@ export default function ProductDetailsScreen() {
             ))}
           </View>
         </View>
-        {/* Quantity selector */}
-        <View style={styles.qtyRow}>
-          <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(Math.max(1, quantity - 1))}>
-            <Text style={styles.qtyBtnText}>-</Text>
-          </TouchableOpacity>
-          <Text style={styles.qtyText}>{quantity}</Text>
-          <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(quantity + 1)}>
-            <Text style={styles.qtyBtnText}>+</Text>
-          </TouchableOpacity>
-        </View>
         {/* Add to Cart button */}
-        <TouchableOpacity style={styles.addToCartBtn}>
-          <Text style={styles.addToCartText}>Add to Cart | ${product.price}</Text>
-          <Text style={styles.addToCartOldPrice}>${product.oldPrice}</Text>
+        <TouchableOpacity
+          style={styles.addToCartBtn}
+          onPress={() => addToCart(
+            {
+              id: product.id,
+              title: product.title,
+              category: product.category,
+              price: product.price,
+              oldPrice: product.oldPrice,
+              rating: product.rating,
+              image: product.image,
+              description: product.description,
+              sizes: product.sizes,
+              colors: product.colors,
+            },
+            selectedSize,
+            selectedColor,
+            quantity
+          )}
+        >
+          <Text style={styles.addToCartText}>Add to Cart | ${(product.price * quantity).toFixed(2)}</Text>
+          {product.oldPrice && (
+            <Text style={styles.addToCartOldPrice}>${(product.oldPrice * quantity).toFixed(2)}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -123,6 +140,36 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 18,
     right: 18,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    zIndex: 2,
+  },
+  imageWrapperLarge: {
+    marginTop: 18,
+    marginHorizontal: 12,
+    borderRadius: 32,
+    overflow: 'hidden',
+    position: 'relative',
+    alignItems: 'center',
+    height: 380,
+    backgroundColor: '#fff',
+    elevation: 2,
+  },
+  imageLarge: {
+    width: '100%',
+    height: 380,
+    borderRadius: 32,
+  },
+  backBtn: {
+    position: 'absolute',
+    top: 18,
+    left: 18,
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 8,
@@ -249,6 +296,14 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     marginTop: 8,
   },
+  qtyRowInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7F7FC',
+    borderRadius: 18,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
   qtyBtn: {
     width: 36,
     height: 36,
@@ -290,5 +345,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textDecorationLine: 'line-through',
     opacity: 0.7,
+  },
+  selectorBlock: {
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  sizeRowBlock: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  colorRowBlock: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
+  },
+  titleQtyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
 }); 

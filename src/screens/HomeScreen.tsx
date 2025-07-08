@@ -1,56 +1,51 @@
-import React from 'react';
-import { View, Text, StyleSheet, TextInput, Image, ScrollView, TouchableOpacity, FlatList, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, Image, ScrollView, TouchableOpacity, FlatList, Dimensions, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { HomeStackParamList } from '../navigation/HomeStack';
+import { products } from '../products';
+import { useFavourites } from '../FavouritesContext';
 
 const userPhoto = require('../../assets/images/1.png'); // Placeholder for user photo
 
-const products = [
-  {
-    id: '1',
-    title: 'Modern Light Clothes',
-    category: 'T-Shirt',
-    price: 212.99,
-    rating: 5.0,
-    image: require('../../assets/images/2.png'),
-  },
-  {
-    id: '2',
-    title: 'Light Dress Bless',
-    category: 'Dress modern',
-    price: 162.99,
-    rating: 5.0,
-    image: require('../../assets/images/1.png'),
-  },
-  {
-    id: '3',
-    title: 'Modern Light Clothes',
-    category: 'T-Shirt',
-    price: 212.99,
-    rating: 5.0,
-    image: require('../../assets/images/2.png'),
-  },
-  {
-    id: '4',
-    title: 'Light Dress Bless',
-    category: 'Dress modern',
-    price: 162.99,
-    rating: 5.0,
-    image: require('../../assets/images/1.png'),
-  },
-];
-
 const categories = [
-  { label: 'All Items', icon: '◯' },
-  { label: 'Dress', icon: '👗' },
-  { label: 'T-Shirt', icon: '👕' },
+  { label: 'All Items', icon: '◯', value: 'all' },
+  { label: 'Dress', icon: '👗', value: 'Dress' },
+  { label: 'T-Shirt', icon: '👕', value: 'T-Shirt' },
+  { label: 'Polo', icon: '🧑‍💼', value: 'Polo' },
 ];
 
-const CARD_MARGIN = 14;
-const CARD_WIDTH = (Dimensions.get('window').width - 3 * CARD_MARGIN) / 2;
+const priceRanges = [
+  { label: 'All Prices', value: 'all' },
+  { label: 'Under $100', value: 'under100' },
+  { label: '$100 - $200', value: '100to200' },
+  { label: 'Over $200', value: 'over200' },
+];
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_MARGIN = SCREEN_WIDTH * 0.035;
+const CARD_WIDTH = (SCREEN_WIDTH - 3 * CARD_MARGIN) / 2;
 const CARD_HEIGHT = CARD_WIDTH * 1.35;
 
 const HomeScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList, 'HomeMain'>>();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedPrice, setSelectedPrice] = useState('all');
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const { isFavourite, toggleFavourite } = useFavourites();
+
+  // Filter products by category, search, and price
+  const filteredProducts = products.filter(product => {
+    const matchesCategory = selectedCategory === 'all' || product.category.toLowerCase().includes(selectedCategory.toLowerCase());
+    const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
+    let matchesPrice = true;
+    if (selectedPrice === 'under100') matchesPrice = product.price < 100;
+    else if (selectedPrice === '100to200') matchesPrice = product.price >= 100 && product.price <= 200;
+    else if (selectedPrice === 'over200') matchesPrice = product.price > 200;
+    return matchesCategory && matchesSearch && matchesPrice;
+  });
+
   return (
     <View style={styles.container}>
       {/* Header with user photo */}
@@ -67,21 +62,46 @@ const HomeScreen = () => {
           style={styles.searchInput}
           placeholder="Search clothes ..."
           placeholderTextColor="#B0B0B0"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
         />
       </View>
-      {/* Categories - horizontal scroll */}
-      <View style={{ height: 48, marginBottom: 18 }}>
+      {/* Filter Bar: Categories + Price */}
+      <View style={styles.filterBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}>
           {categories.map((cat, idx) => (
-            <TouchableOpacity key={cat.label} style={[styles.categoryBtn, idx === 0 && styles.categoryBtnActive]}>
-              <Text style={[styles.categoryText, idx === 0 && styles.categoryTextActive]}>{cat.icon} {cat.label}</Text>
+            <TouchableOpacity
+              key={cat.label}
+              style={[styles.categoryBtn, selectedCategory === cat.value && styles.categoryBtnActive]}
+              onPress={() => setSelectedCategory(cat.value)}
+            >
+              <Text style={[styles.categoryText, selectedCategory === cat.value && styles.categoryTextActive]}>{cat.icon} {cat.label}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
+        <TouchableOpacity style={styles.priceFilterBtn} onPress={() => setShowPriceModal(true)}>
+          <Text style={styles.priceFilterText}>{priceRanges.find(r => r.value === selectedPrice)?.label || 'All Prices'}</Text>
+        </TouchableOpacity>
       </View>
+      {/* Price Filter Modal */}
+      <Modal visible={showPriceModal} transparent animationType="fade">
+        <TouchableOpacity style={styles.modalOverlay} onPress={() => setShowPriceModal(false)}>
+          <View style={styles.priceModal}>
+            {priceRanges.map(range => (
+              <TouchableOpacity
+                key={range.value}
+                style={[styles.priceModalOption, selectedPrice === range.value && styles.priceModalOptionActive]}
+                onPress={() => { setSelectedPrice(range.value); setShowPriceModal(false); }}
+              >
+                <Text style={[styles.priceModalText, selectedPrice === range.value && styles.priceModalTextActive]}>{range.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
       {/* Product Cards - vertical grid */}
       <FlatList
-        data={products}
+        data={filteredProducts}
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
         numColumns={2}
@@ -90,14 +110,14 @@ const HomeScreen = () => {
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('ProductDetails', { product: item })}>
             <Image source={item.image} style={styles.cardImage} resizeMode="cover" />
-            <TouchableOpacity style={styles.favoriteBtn}>
-              <Text style={{ fontSize: 18, color: '#222' }}>♡</Text>
+            <TouchableOpacity style={styles.favoriteBtn} onPress={() => toggleFavourite(item.id)}>
+              <Text style={{ fontSize: 18, color: isFavourite(item.id) ? '#E53935' : '#222' }}>{isFavourite(item.id) ? '♥' : '♡'}</Text>
             </TouchableOpacity>
             <View style={styles.cardOverlay}>
               <Text style={styles.cardTitle}>{item.title}</Text>
               <Text style={styles.cardCategory}>{item.category}</Text>
               <View style={styles.cardRow}>
-                <Text style={styles.cardPrice}>${item.price}</Text>
+                <Text style={styles.cardPrice}>${item.price.toFixed(2)}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text style={styles.cardStar}>★</Text>
                   <Text style={styles.cardRating}>{item.rating}</Text>
@@ -122,7 +142,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
   },
   hello: {
     fontSize: 16,
@@ -138,14 +158,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   userPhoto: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: SCREEN_WIDTH * 0.12,
+    height: SCREEN_WIDTH * 0.12,
+    borderRadius: (SCREEN_WIDTH * 0.12) / 2,
     marginLeft: 10,
   },
   searchContainer: {
     marginVertical: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
   },
   searchInput: {
     backgroundColor: '#fff',
@@ -163,14 +183,14 @@ const styles = StyleSheet.create({
   categories: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 20,
+    paddingLeft: SCREEN_WIDTH * 0.05,
     gap: 10,
   },
   categoryBtn: {
     backgroundColor: '#fff',
     borderRadius: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingHorizontal: SCREEN_WIDTH * 0.045,
+    paddingVertical: SCREEN_WIDTH * 0.025,
     borderWidth: 0,
     marginRight: 10,
     shadowColor: '#000',
@@ -189,6 +209,60 @@ const styles = StyleSheet.create({
   },
   categoryTextActive: {
     color: '#fff',
+  },
+  filterBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
+    gap: 8,
+  },
+  priceFilterBtn: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginLeft: 8,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+  },
+  priceFilterText: {
+    color: '#222',
+    fontWeight: '500',
+    fontSize: 15,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  priceModal: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+    minWidth: 200,
+    elevation: 3,
+  },
+  priceModalOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  priceModalOptionActive: {
+    backgroundColor: '#222',
+  },
+  priceModalText: {
+    fontSize: 16,
+    color: '#222',
+  },
+  priceModalTextActive: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   products: {
     paddingHorizontal: CARD_MARGIN,
@@ -227,10 +301,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    padding: 14,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: 'rgba(255,255,255,0.97)',
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 14,
     borderBottomLeftRadius: 22,
     borderBottomRightRadius: 22,
+    minHeight: 80,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardTitle: {
     fontSize: 15,
