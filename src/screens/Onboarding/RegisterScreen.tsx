@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Easing } from 'react-native';
 
-export default function RegisterScreen({ navigation }: any) {
+export default function RegisterScreen({ navigation, setIsAuthenticated }: any) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
   const bounceAnim = useRef(new Animated.Value(1)).current;
@@ -37,7 +37,7 @@ export default function RegisterScreen({ navigation }: any) {
           <View style={styles.flag}><Text style={styles.flagText}>🇬🇧</Text></View>
           <TextInput style={styles.phoneInput} placeholder="Your number" placeholderTextColor="#B0B0B0" keyboardType="phone-pad" />
         </View>
-        <TouchableOpacity style={styles.button} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={() => { /* TODO: Add real registration logic */ }}>
           <Text style={styles.buttonText}>Done</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>

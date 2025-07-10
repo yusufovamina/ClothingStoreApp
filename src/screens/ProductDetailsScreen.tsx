@@ -7,6 +7,7 @@ import { RouteProp } from '@react-navigation/native';
 import { HomeStackParamList } from '../navigation/HomeStack';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../CartContext';
 
 export default function ProductDetailsScreen() {
   const { addToCart } = useCart();
@@ -18,11 +19,32 @@ export default function ProductDetailsScreen() {
   const [quantity, setQuantity] = useState<number>(1);
   const [readMore, setReadMore] = useState(false);
   const navigation = useNavigation();
+  const { colors } = useTheme();
+
+  const handleAddToCart = () => {
+    addToCart(
+      {
+        id: product.id,
+        title: product.title,
+        category: product.category,
+        price: product.price,
+        oldPrice: product.oldPrice,
+        rating: product.rating,
+        image: product.image,
+        description: product.description,
+        sizes: product.sizes,
+        colors: product.colors,
+      },
+      selectedSize,
+      selectedColor,
+      quantity
+    );
+  };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* Image and overlay buttons */}
-      <View style={styles.imageWrapperLarge}>
+      <View style={[styles.imageWrapperLarge, { backgroundColor: colors.card }]}>
         <Image source={product.image} style={styles.imageLarge} resizeMode="cover" />
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#222" />
@@ -32,51 +54,46 @@ export default function ProductDetailsScreen() {
         </TouchableOpacity>
       </View>
       {/* Info section */}
-      <View style={styles.infoSection}>
+      <View style={[styles.infoSection, { backgroundColor: colors.card, shadowColor: colors.text }]}>
         {/* Title and quantity row */}
         <View style={styles.titleQtyRow}>
-          <Text style={styles.title}>{product.title}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{product.title}</Text>
           <View style={styles.qtyRowInline}>
-            <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(Math.max(1, quantity - 1))}>
-              <Text style={styles.qtyBtnText}>-</Text>
+            <TouchableOpacity style={[styles.qtyBtn, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={() => setQuantity(q => Math.max(1, q - 1))}>
+              <Text style={[styles.qtyBtnText, { color: colors.text }]}>-</Text>
             </TouchableOpacity>
-            <Text style={styles.qtyText}>{quantity}</Text>
-            <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(quantity + 1)}>
-              <Text style={styles.qtyBtnText}>+</Text>
+            <Text style={[styles.qtyText, { color: '#000' }]}>{quantity}</Text>
+            <TouchableOpacity style={[styles.qtyBtn, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={() => setQuantity(q => q + 1)}>
+              <Text style={[styles.qtyBtnText, { color: colors.text }]}>+</Text>
             </TouchableOpacity>
           </View>
         </View>
         {/* Rating and reviews */}
         <View style={styles.ratingRow}>
           <Text style={styles.star}>★</Text>
-          <Text style={styles.rating}>{product.rating}</Text>
+          <Text style={[styles.rating, { color: colors.text === '#fff' ? '#fff' : '#000' }]}>{product.rating}</Text>
           <Text style={styles.reviews}>({product.reviews?.toLocaleString() || '0'} reviews)</Text>
         </View>
         {/* Description */}
-        <Text style={styles.desc} numberOfLines={readMore ? undefined : 2}>
-          {product.description}
-          {!readMore && (
-            <Text style={styles.readMore} onPress={() => setReadMore(true)}> Read More...</Text>
-          )}
-        </Text>
+        <Text style={[styles.desc, { color: colors.textSecondary }]}>{product.description}</Text>
         {/* Size selector */}
         <View style={styles.selectorBlock}>
-          <Text style={styles.selectorLabel}>Choose Size</Text>
+          <Text style={[styles.selectorLabel, { color: colors.text }]}>Choose Size</Text>
           <View style={styles.sizeRowBlock}>
             {(product.sizes || ['M']).map((size: string) => (
               <TouchableOpacity
                 key={size}
-                style={[styles.sizeBtn, selectedSize === size && styles.sizeBtnActive]}
+                style={[styles.sizeBtn, { backgroundColor: colors.card, borderColor: colors.border }, selectedSize === size && { backgroundColor: colors.accent }]}
                 onPress={() => setSelectedSize(size)}
               >
-                <Text style={[styles.sizeText, selectedSize === size && styles.sizeTextActive]}>{size}</Text>
+                <Text style={[styles.sizeText, { color: colors.text }, selectedSize === size && { color: colors.card }]}>{size}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
         {/* Color selector */}
         <View style={styles.selectorBlock}>
-          <Text style={styles.selectorLabel}>Color</Text>
+          <Text style={[styles.selectorLabel, { color: colors.text }]}>Color</Text>
           <View style={styles.colorRowBlock}>
             {(product.colors || ['#000']).map((color: string) => (
               <TouchableOpacity
@@ -88,29 +105,10 @@ export default function ProductDetailsScreen() {
           </View>
         </View>
         {/* Add to Cart button */}
-        <TouchableOpacity
-          style={styles.addToCartBtn}
-          onPress={() => addToCart(
-            {
-              id: product.id,
-              title: product.title,
-              category: product.category,
-              price: product.price,
-              oldPrice: product.oldPrice,
-              rating: product.rating,
-              image: product.image,
-              description: product.description,
-              sizes: product.sizes,
-              colors: product.colors,
-            },
-            selectedSize,
-            selectedColor,
-            quantity
-          )}
-        >
-          <Text style={styles.addToCartText}>Add to Cart | ${(product.price * quantity).toFixed(2)}</Text>
+        <TouchableOpacity style={[styles.addToCartBtn, { backgroundColor: colors.accent }]} onPress={handleAddToCart}>
+          <Text style={[styles.addToCartText, { color: colors.card }]}>{`Add to Cart | $${(product.price * quantity).toFixed(2)}`}</Text>
           {product.oldPrice && (
-            <Text style={styles.addToCartOldPrice}>${(product.oldPrice * quantity).toFixed(2)}</Text>
+            <Text style={[styles.addToCartOldPrice, { color: colors.textSecondary }]}>{`$${(product.oldPrice * quantity).toFixed(2)}`}</Text>
           )}
         </TouchableOpacity>
       </View>

@@ -61,4 +61,77 @@ export const useCart = () => {
   const ctx = useContext(CartContext);
   if (!ctx) throw new Error('useCart must be used within a CartProvider');
   return ctx;
-}; 
+};
+
+// Orders Context
+type Order = {
+  id: string;
+  items: any[];
+  total: number;
+  date: string;
+};
+
+const OrdersContext = createContext<{
+  orders: Order[];
+  addOrder: (order: Order) => void;
+} | undefined>(undefined);
+
+export function OrdersProvider({ children }: { children: React.ReactNode }) {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const addOrder = (order: Order) => setOrders(prev => [order, ...prev]);
+  return (
+    <OrdersContext.Provider value={{ orders, addOrder }}>
+      {children}
+    </OrdersContext.Provider>
+  );
+}
+
+export function useOrders() {
+  const ctx = useContext(OrdersContext);
+  if (!ctx) throw new Error('useOrders must be used within OrdersProvider');
+  return ctx;
+}
+
+// Theme Context
+type ThemeType = 'light' | 'dark';
+const lightColors = {
+  background: '#F7F7FC',
+  card: '#fff',
+  text: '#222',
+  textSecondary: '#888',
+  accent: '#1769FF',
+  danger: '#E53935',
+  border: '#F0F0F0',
+};
+const darkColors = {
+  background: '#181A20',
+  card: '#23262F',
+  text: '#fff',
+  textSecondary: '#B0B0B0',
+  accent: '#4F8CFF',
+  danger: '#FF5A5F',
+  border: '#23262F',
+};
+
+const ThemeContext = createContext<{
+  theme: ThemeType;
+  colors: typeof lightColors;
+  toggleTheme: () => void;
+} | undefined>(undefined);
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<ThemeType>('light');
+  const toggleTheme = () => setTheme(t => (t === 'light' ? 'dark' : 'light'));
+  const colors = theme === 'light' ? lightColors : darkColors;
+  return (
+    <ThemeContext.Provider value={{ theme, colors, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+export function useTheme() {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+  return ctx;
+} 

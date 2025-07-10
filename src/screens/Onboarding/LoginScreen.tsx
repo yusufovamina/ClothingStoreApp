@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Easing } from 'react-native';
 
-export default function LoginScreen({ navigation }: any) {
+export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
 
@@ -22,7 +22,7 @@ export default function LoginScreen({ navigation }: any) {
         <Text style={styles.subtitle}>Good to see you back! <Text style={{ fontSize: 18 }}>🖤</Text></Text>
         <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#B0B0B0" keyboardType="email-address" autoCapitalize="none" />
         <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#B0B0B0" secureTextEntry />
-        <TouchableOpacity style={styles.button} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={() => { /* TODO: Add real authentication */ }}>
           <Text style={styles.buttonText}>Next</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
