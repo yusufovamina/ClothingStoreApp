@@ -24,12 +24,11 @@ export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
     }
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.133:3001/users?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+      const response = await fetch(`http://localhost:3001/users?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
       const users = await response.json();
       if (users.length > 0) {
         await AsyncStorage.setItem('user', JSON.stringify(users[0]));
         setIsAuthenticated && setIsAuthenticated(true);
-        // Можно сохранить пользователя в контекст или AsyncStorage, если нужно
       } else {
         Alert.alert('Login failed', 'Invalid email or password.');
       }
