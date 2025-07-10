@@ -1,10 +1,17 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Easing } from 'react-native';
 
 export default function RegisterScreen({ navigation, setIsAuthenticated }: any) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
   const bounceAnim = useRef(new Animated.Value(1)).current;
+
+  // Registration form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     Animated.parallel([
@@ -20,6 +27,33 @@ export default function RegisterScreen({ navigation, setIsAuthenticated }: any) 
     ]).start();
   };
 
+  const handleRegister = async () => {
+    setLoading(true);
+    setError('');
+    if (!email || !password || !phone) {
+      setError('Please fill all fields.');
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:3001/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, phone }),
+      });
+      if (res.ok) {
+        setLoading(false);
+        navigation.navigate('Login');
+      } else {
+        setError('Registration failed.');
+        setLoading(false);
+      }
+    } catch (e) {
+      setError('Network error.');
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.blob1} />
@@ -31,14 +65,15 @@ export default function RegisterScreen({ navigation, setIsAuthenticated }: any) 
             <Text style={styles.photoIcon}>📷</Text>
           </TouchableOpacity>
         </Animated.View>
-        <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#B0B0B0" keyboardType="email-address" autoCapitalize="none" />
-        <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#B0B0B0" secureTextEntry />
+        <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#B0B0B0" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+        <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#B0B0B0" secureTextEntry value={password} onChangeText={setPassword} />
         <View style={styles.phoneRow}>
           <View style={styles.flag}><Text style={styles.flagText}>🇬🇧</Text></View>
-          <TextInput style={styles.phoneInput} placeholder="Your number" placeholderTextColor="#B0B0B0" keyboardType="phone-pad" />
+          <TextInput style={styles.phoneInput} placeholder="Your number" placeholderTextColor="#B0B0B0" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
         </View>
-        <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={() => { /* TODO: Add real registration logic */ }}>
-          <Text style={styles.buttonText}>Done</Text>
+        {error ? <Text style={{ color: 'red', marginBottom: 8 }}>{error}</Text> : null}
+        <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={handleRegister} disabled={loading}>
+          <Text style={styles.buttonText}>{loading ? 'Registering...' : 'Done'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
           <Text style={styles.cancelText}>Cancel</Text>
