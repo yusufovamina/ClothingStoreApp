@@ -1,24 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useOrders, useTheme } from '../CartContext';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, TouchableWithoutFeedback, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, TouchableWithoutFeedback, Switch, TextInput, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-const userPhoto = require('../../assets/images/1.png'); // Placeholder
-
-export default function ProfileScreen({ navigation }: any) {
+export default function ProfileScreen({ navigation, setIsAuthenticated }: any) {
   const [modal, setModal] = useState<null | 'about' | 'support' | 'orders'>(null);
   const { orders } = useOrders();
   const { theme, toggleTheme, colors } = useTheme();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        setUser(u);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('user');
+    setIsAuthenticated && setIsAuthenticated(false);
+    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+  };
+
+  const getUserPhotoSource = () => {
+    if (user && user.photo && user.photo.startsWith('http')) {
+      return { uri: user.photo };
+    }
+    return require('../../assets/images/1.png');
+  };
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* User Info */}
       <View style={[styles.userInfoSection, { backgroundColor: colors.card }]}>
-        <Image source={userPhoto} style={styles.userPhoto} />
-        <Text style={[styles.userName, { color: colors.text }]}>Albert Stevano</Text>
-        <Text style={[styles.userEmail, { color: colors.textSecondary }]}>albert@email.com</Text>
-        <TouchableOpacity style={[styles.editProfileBtn, { backgroundColor: colors.accent }]}>
-          <Text style={[styles.editProfileText, { color: colors.card }]}>Edit Profile</Text>
-        </TouchableOpacity>
+        <Image source={getUserPhotoSource()} style={styles.userPhoto} />
+        <Text style={[styles.userName, { color: colors.text }]}>{user ? user.username : '—'}</Text>
+        <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user ? user.email : ''}</Text>
       </View>
 
       {/* Account Actions */}
@@ -84,7 +106,7 @@ export default function ProfileScreen({ navigation }: any) {
       )}
 
       {/* Logout */}
-      <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: colors.card, shadowColor: colors.text }]} onPress={() => {}}>
+      <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: colors.card, shadowColor: colors.text }]} onPress={handleLogout}>
         <Icon name="sign-out" size={20} color={colors.danger} style={{ marginRight: 10 }} />
         <Text style={[styles.logoutText, { color: colors.danger }]}>Logout</Text>
       </TouchableOpacity>

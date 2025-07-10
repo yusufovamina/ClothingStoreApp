@@ -1,9 +1,14 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Easing } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, Easing, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -11,6 +16,29 @@ export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
       Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true, easing: Easing.out(Easing.ease) }),
     ]).start();
   }, []);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch(`http://192.168.0.133:3001/users?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+      const users = await response.json();
+      if (users.length > 0) {
+        await AsyncStorage.setItem('user', JSON.stringify(users[0]));
+        setIsAuthenticated && setIsAuthenticated(true);
+        // Можно сохранить пользователя в контекст или AsyncStorage, если нужно
+      } else {
+        Alert.alert('Login failed', 'Invalid email or password.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to connect to server.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -20,10 +48,10 @@ export default function LoginScreen({ navigation, setIsAuthenticated }: any) {
       <Animated.View style={[styles.form, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }] }>
         <Text style={styles.title}>Login</Text>
         <Text style={styles.subtitle}>Good to see you back! <Text style={{ fontSize: 18 }}>🖤</Text></Text>
-        <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#B0B0B0" keyboardType="email-address" autoCapitalize="none" />
-        <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#B0B0B0" secureTextEntry />
-        <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={() => { /* TODO: Add real authentication */ }}>
-          <Text style={styles.buttonText}>Next</Text>
+        <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#B0B0B0" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+        <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#B0B0B0" secureTextEntry value={password} onChangeText={setPassword} />
+        <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={handleLogin} disabled={loading}>
+          <Text style={styles.buttonText}>{loading ? 'Loading...' : 'Next'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
           <Text style={styles.cancelText}>Cancel</Text>

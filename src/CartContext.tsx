@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect } from 'react';
 
 export type CartItem = {
   id: string;
@@ -78,7 +80,39 @@ const OrdersContext = createContext<{
 
 export function OrdersProvider({ children }: { children: React.ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
-  const addOrder = (order: Order) => setOrders(prev => [order, ...prev]);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Load userId from AsyncStorage
+  useEffect(() => {
+    const loadUserId = async () => {
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setUserId(user.id?.toString());
+      }
+    };
+    loadUserId();
+  }, []);
+
+  // Load orders for user
+  useEffect(() => {
+    if (!userId) return;
+    const loadOrders = async () => {
+      const ordersStr = await AsyncStorage.getItem(`orders_${userId}`);
+      if (ordersStr) setOrders(JSON.parse(ordersStr));
+      else setOrders([]);
+    };
+    loadOrders();
+  }, [userId]);
+
+  const addOrder = (order: Order) => {
+    setOrders(prev => {
+      const updated = [order, ...prev];
+      if (userId) AsyncStorage.setItem(`orders_${userId}`, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
     <OrdersContext.Provider value={{ orders, addOrder }}>
       {children}

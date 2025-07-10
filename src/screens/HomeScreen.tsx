@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Image, ScrollView, TouchableOpacity, FlatList, Dimensions, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,6 +7,7 @@ import { products } from '../products';
 import { useFavourites } from '../FavouritesContext';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useTheme } from '../CartContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const userPhoto = require('../../assets/images/1.png'); // Placeholder for user photo
 
@@ -37,6 +37,12 @@ const HomeScreen = () => {
   const [selectedPrice, setSelectedPrice] = useState('all');
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  useEffect(() => {
+    AsyncStorage.getItem('user').then(userStr => {
+      if (userStr) setUser(JSON.parse(userStr));
+    });
+  }, []);
   const suggestionResults = searchQuery.length > 0
     ? products.filter(product => product.title.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5)
     : [];
@@ -93,9 +99,9 @@ const HomeScreen = () => {
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.hello, { color: colors.textSecondary }]}>Hello, Welcome <Text style={styles.wave}>👋</Text></Text>
-          <Text style={[styles.username, { color: colors.text }]}>Albert Stevano</Text>
+          <Text style={[styles.username, { color: colors.text }]}>{user ? user.username : '—'}</Text>
         </View>
-        <Image source={userPhoto} style={styles.userPhoto} />
+        <Image source={user && user.photo && user.photo.startsWith('http') ? { uri: user.photo } : userPhoto} style={styles.userPhoto} />
       </View>
       {/* Search Bar */}
       <View style={styles.searchContainer}>

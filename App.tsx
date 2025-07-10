@@ -62,7 +62,9 @@ function AppWithTheme() {
           <Tab.Screen name="Home" component={HomeStack} />
           <Tab.Screen name="Cart" component={CartScreen} />
           <Tab.Screen name="Favourites" component={FavouritesScreen} />
-          <Tab.Screen name="Profile" component={ProfileScreen} />
+          <Tab.Screen name="Profile">
+            {props => <ProfileScreen {...props} setIsAuthenticated={setIsAuthenticated} />}
+          </Tab.Screen>
         </Tab.Navigator>
       ) : (
         <AuthStack setIsAuthenticated={setIsAuthenticated} />
