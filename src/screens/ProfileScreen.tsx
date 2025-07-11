@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useOrders, useTheme } from '../CartContext';
+import { useFavourites } from '../FavouritesContext';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, TouchableWithoutFeedback, Switch, TextInput, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
@@ -9,6 +10,7 @@ export default function ProfileScreen({ navigation, setIsAuthenticated }: any) {
   const { orders } = useOrders();
   const { theme, toggleTheme, colors } = useTheme();
   const [user, setUser] = useState<any>(null);
+  const { clearFavourites } = useFavourites();
 
   useEffect(() => {
     const loadUser = async () => {
@@ -23,22 +25,29 @@ export default function ProfileScreen({ navigation, setIsAuthenticated }: any) {
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem('user');
+    clearFavourites();
     setIsAuthenticated && setIsAuthenticated(false);
-    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
 
   const getUserPhotoSource = () => {
     if (user && user.photo && user.photo.startsWith('http')) {
       return { uri: user.photo };
     }
-    return require('../../assets/images/1.png');
+    // Return undefined instead of null
+    return undefined;
   };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* User Info */}
       <View style={[styles.userInfoSection, { backgroundColor: colors.card }]}>
-        <Image source={getUserPhotoSource()} style={styles.userPhoto} />
+        {getUserPhotoSource() ? (
+          <Image source={getUserPhotoSource()} style={styles.userPhoto} />
+        ) : (
+          <View style={[styles.userPhoto, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#EEE' }]}> 
+            <Icon name="user" size={48} color="#AAA" />
+          </View>
+        )}
         <Text style={[styles.userName, { color: colors.text }]}>{user ? user.username : '—'}</Text>
         <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user ? user.email : ''}</Text>
       </View>
@@ -67,14 +76,15 @@ export default function ProfileScreen({ navigation, setIsAuthenticated }: any) {
           ) : (
             orders.map(order => (
               <View key={order.id} style={{ marginBottom: 16 }}>
-                <Text style={{ fontWeight: 'bold', color: '#1769FF', marginBottom: 2 }}>Order #{order.id.slice(-6)}</Text>
-                <Text style={{ color: '#888', fontSize: 13, marginBottom: 2 }}>{new Date(order.date).toLocaleString()}</Text>
-                <Text style={{ fontSize: 15, marginBottom: 2 }}>Total: ${order.total.toFixed(2)}</Text>
-                <Text style={{ color: '#444', fontSize: 14, marginBottom: 2 }}>Items:</Text>
+                <Text style={{ fontWeight: 'bold', color: colors.accent, marginBottom: 2 }}>Order #{String(order.id).slice(-6)}</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 2 }}>{new Date(order.date).toLocaleString()}</Text>
+                <Text style={{ fontSize: 15, marginBottom: 2, color: colors.text }}>Total: ${order.total.toFixed(2)}</Text>
+                <Text style={{ color: colors.text, fontSize: 14, marginBottom: 2 }}>Items:</Text>
                 {order.items.map((item, idx) => (
-                  <Text key={idx} style={{ color: '#444', fontSize: 13, marginLeft: 8 }}>
-                    - {item.title} × {item.quantity} ({item.size || '-'}, {item.color || '-'})
-                  </Text>
+                  <View key={idx} style={{ flexDirection: 'row', marginLeft: 8 }}>
+                    <Text style={{ color: colors.text, fontSize: 13 }}>- </Text>
+                    <Text style={{ color: colors.text, fontSize: 13 }}>{String(item.title)} × {String(item.quantity)} ({String(item.size || '-')}, {String(item.color || '-')})</Text>
+                  </View>
                 ))}
               </View>
             ))
@@ -92,16 +102,16 @@ export default function ProfileScreen({ navigation, setIsAuthenticated }: any) {
       {/* About Modal */}
       {modal === 'about' && (
         <ModalView onClose={() => setModal(null)} title="About">
-          <View style={styles.infoRow}><Icon name="info-circle" size={18} color="#1769FF" style={{ marginRight: 10 }} /><Text style={styles.infoText}>ClothingStoreApp v1.0.0</Text></View>
-          <View style={styles.infoRow}><Icon name="user" size={18} color="#1769FF" style={{ marginRight: 10 }} /><Text style={styles.infoText}>Developed by Your Company</Text></View>
-          <View style={styles.infoRow}><Icon name="globe" size={18} color="#1769FF" style={{ marginRight: 10 }} /><Text style={styles.infoText}>www.yourcompany.com</Text></View>
+          <View style={styles.infoRow}><Icon name="info-circle" size={18} color={colors.accent} style={{ marginRight: 10 }} /><Text style={[styles.infoText, { color: colors.text }]}>ClothingStoreApp v1.0.0</Text></View>
+          <View style={styles.infoRow}><Icon name="user" size={18} color={colors.accent} style={{ marginRight: 10 }} /><Text style={[styles.infoText, { color: colors.text }]}>Developed by Your Company</Text></View>
+          <View style={styles.infoRow}><Icon name="globe" size={18} color={colors.accent} style={{ marginRight: 10 }} /><Text style={[styles.infoText, { color: colors.text }]}>www.yourcompany.com</Text></View>
         </ModalView>
       )}
       {/* Support Modal */}
       {modal === 'support' && (
         <ModalView onClose={() => setModal(null)} title="Help & Support">
-          <View style={styles.infoRow}><Icon name="question-circle" size={18} color="#1769FF" style={{ marginRight: 10 }} /><Text style={styles.infoText}>FAQ: See our most common questions in the app or on our website.</Text></View>
-          <View style={styles.infoRow}><Icon name="envelope" size={18} color="#1769FF" style={{ marginRight: 10 }} /><Text style={styles.infoText}>Contact: support@yourcompany.com</Text></View>
+          <View style={styles.infoRow}><Icon name="question-circle" size={18} color={colors.accent} style={{ marginRight: 10 }} /><Text style={[styles.infoText, { color: colors.text }]}>FAQ: See our most common questions in the app or on our website.</Text></View>
+          <View style={styles.infoRow}><Icon name="envelope" size={18} color={colors.accent} style={{ marginRight: 10 }} /><Text style={[styles.infoText, { color: colors.text }]}>Contact: support@yourcompany.com</Text></View>
         </ModalView>
       )}
 
@@ -125,16 +135,19 @@ function MenuItem({ icon, label, onPress }: { icon: string, label: string, onPre
 }
 
 function ModalView({ onClose, title, children }: { onClose: () => void, title: string, children: React.ReactNode }) {
+  const { colors } = useTheme();
   return (
     <Modal transparent animationType="fade" visible onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={modalStyles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={modalStyles.modalBox}>
-              <Text style={modalStyles.title}>{title}</Text>
-              {children}
-              <TouchableOpacity style={modalStyles.closeBtn} onPress={onClose}>
-                <Text style={modalStyles.closeText}>Close</Text>
+            <View style={[modalStyles.modalBox, { backgroundColor: colors.card }]}> {/* Use theme card color */}
+              <Text style={[modalStyles.title, { color: colors.accent }]}>{title}</Text>
+              {React.Children.map(children, child =>
+                (typeof child === 'string' || typeof child === 'number') ? <Text style={{ color: colors.text }}>{child}</Text> : child
+              )}
+              <TouchableOpacity style={[modalStyles.closeBtn, { backgroundColor: colors.accent }]} onPress={onClose}>
+                <Text style={[modalStyles.closeText, { color: '#fff' }]} >Close</Text>
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>

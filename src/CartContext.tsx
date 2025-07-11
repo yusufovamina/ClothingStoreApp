@@ -68,6 +68,7 @@ export const useCart = () => {
 // Orders Context
 type Order = {
   id: string;
+  userId: string;
   items: any[];
   total: number;
   date: string;
@@ -75,7 +76,7 @@ type Order = {
 
 const OrdersContext = createContext<{
   orders: Order[];
-  addOrder: (order: Order) => void;
+  addOrder: (order: Omit<Order, 'id'>) => Promise<void>;
 } | undefined>(undefined);
 
 export function OrdersProvider({ children }: { children: React.ReactNode }) {
@@ -88,29 +89,46 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
       const userStr = await AsyncStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
-        setUserId(user.id?.toString());
+        setUserId(user.id ? String(user.id) : null);
       }
     };
     loadUserId();
   }, []);
 
-  // Load orders for user
+  // Load orders for user from API
   useEffect(() => {
     if (!userId) return;
     const loadOrders = async () => {
-      const ordersStr = await AsyncStorage.getItem(`orders_${userId}`);
-      if (ordersStr) setOrders(JSON.parse(ordersStr));
-      else setOrders([]);
+      try {
+        const res = await fetch(`http://192.168.0.133:3001/orders?userId=${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(Array.isArray(data) ? data.filter(order => String(order.userId) === String(userId)) : []);
+        } else {
+          setOrders([]);
+        }
+      } catch {
+        setOrders([]);
+      }
     };
     loadOrders();
   }, [userId]);
 
-  const addOrder = (order: Order) => {
-    setOrders(prev => {
-      const updated = [order, ...prev];
-      if (userId) AsyncStorage.setItem(`orders_${userId}`, JSON.stringify(updated));
-      return updated;
-    });
+  // Add order to API
+  const addOrder = async (order: Omit<Order, 'id'>) => {
+    try {
+      const res = await fetch('http://192.168.0.133:3001/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...order, userId: String(order.userId) }),
+      });
+      if (res.ok) {
+        const newOrder = await res.json();
+        setOrders(prev => [newOrder, ...prev]);
+      }
+    } catch {
+      // handle error if needed
+    }
   };
 
   return (

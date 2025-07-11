@@ -101,7 +101,13 @@ const HomeScreen = () => {
           <Text style={[styles.hello, { color: colors.textSecondary }]}>Hello, Welcome <Text style={styles.wave}>👋</Text></Text>
           <Text style={[styles.username, { color: colors.text }]}>{user ? user.username : '—'}</Text>
         </View>
-        <Image source={user && user.photo && user.photo.startsWith('http') ? { uri: user.photo } : userPhoto} style={styles.userPhoto} />
+        {user && user.photo && user.photo.startsWith('http') ? (
+          <Image source={{ uri: user.photo }} style={styles.userPhoto} />
+        ) : (
+          <View style={[styles.userPhoto, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#EEE' }]}>
+            <Icon name="user" size={28} color="#AAA" />
+          </View>
+        )}
       </View>
       {/* Search Bar */}
       <View style={styles.searchContainer}>

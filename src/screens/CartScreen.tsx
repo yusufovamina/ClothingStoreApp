@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Dimensions, Modal } from 'react-native';
 import { useCart, useOrders, useTheme } from '../CartContext';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const paymentCard = {
   type: 'VISA',
@@ -19,6 +20,13 @@ export default function CartScreen() {
   const insets = useSafeAreaInsets();
   const [modalProductId, setModalProductId] = useState<string | null>(null);
   const [showPayModal, setShowPayModal] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem('user').then(userStr => {
+      if (userStr) setUser(JSON.parse(userStr));
+    });
+  }, []);
 
   const updateQty = (id: string, size?: string, color?: string, delta: number = 1) => {
     const item = cart.find(ci => ci.id === id && ci.size === size && ci.color === color);
@@ -49,10 +57,10 @@ export default function CartScreen() {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discount = cart.reduce((sum, item) => sum + (((item.oldPrice ?? item.price) - item.price) * item.quantity), 0);
 
-  const handlePay = () => {
-    if (cart.length === 0) return;
-    addOrder({
-      id: Date.now().toString(),
+  const handlePay = async () => {
+    if (cart.length === 0 || !user) return;
+    await addOrder({
+      userId: user.id,
       items: cart,
       total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
       date: new Date().toISOString(),

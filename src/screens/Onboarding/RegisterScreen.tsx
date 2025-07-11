@@ -7,9 +7,9 @@ export default function RegisterScreen({ navigation, setIsAuthenticated }: any) 
   const bounceAnim = useRef(new Animated.Value(1)).current;
 
   // Registration form state
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -30,16 +30,16 @@ export default function RegisterScreen({ navigation, setIsAuthenticated }: any) 
   const handleRegister = async () => {
     setLoading(true);
     setError('');
-    if (!email || !password || !phone) {
+    if (!username || !password || !email) {
       setError('Please fill all fields.');
       setLoading(false);
       return;
     }
     try {
-      const res = await fetch('http://localhost:3001/users', {
+      const res = await fetch('http://192.168.0.133:3001/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, phone }),
+        body: JSON.stringify({ username, password, email }),
       });
       if (res.ok) {
         setLoading(false);
@@ -65,12 +65,9 @@ export default function RegisterScreen({ navigation, setIsAuthenticated }: any) 
             <Text style={styles.photoIcon}>📷</Text>
           </TouchableOpacity>
         </Animated.View>
-        <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#B0B0B0" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+        <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#B0B0B0" autoCapitalize="none" value={username} onChangeText={setUsername} />
         <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#B0B0B0" secureTextEntry value={password} onChangeText={setPassword} />
-        <View style={styles.phoneRow}>
-          <View style={styles.flag}><Text style={styles.flagText}>🇬🇧</Text></View>
-          <TextInput style={styles.phoneInput} placeholder="Your number" placeholderTextColor="#B0B0B0" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
-        </View>
+        <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#B0B0B0" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
         {error ? <Text style={{ color: 'red', marginBottom: 8 }}>{error}</Text> : null}
         <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={handleRegister} disabled={loading}>
           <Text style={styles.buttonText}>{loading ? 'Registering...' : 'Done'}</Text>
