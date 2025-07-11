@@ -20,6 +20,7 @@ export type CartItem = {
 
 type CartContextType = {
   cart: CartItem[];
+  userId: string | null;
   addToCart: (item: Omit<CartItem, 'quantity'>, size?: string, color?: string, quantity?: number) => void;
   removeFromCart: (id: string, size?: string, color?: string) => void;
   clearCart: () => void;
@@ -29,6 +30,18 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadUserId = async () => {
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setUserId(user.id ? String(user.id) : null);
+      }
+    };
+    loadUserId();
+  }, []);
 
   const addToCart = (item: Omit<CartItem, 'quantity'>, size?: string, color?: string, quantity: number = 1) => {
     setCart(prev => {
@@ -53,7 +66,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const clearCart = () => setCart([]);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart }}>
+    <CartContext.Provider value={{ cart, userId, addToCart, removeFromCart, clearCart }}>
       {children}
     </CartContext.Provider>
   );
@@ -100,7 +113,7 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
     if (!userId) return;
     const loadOrders = async () => {
       try {
-        const res = await fetch(`http://192.168.0.133:3001/orders?userId=${userId}`);
+        const res = await fetch(`http://localhost:3001/orders?userId=${userId}`);
         if (res.ok) {
           const data = await res.json();
           setOrders(Array.isArray(data) ? data.filter(order => String(order.userId) === String(userId)) : []);
@@ -117,7 +130,7 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
   // Add order to API
   const addOrder = async (order: Omit<Order, 'id'>) => {
     try {
-      const res = await fetch('http://192.168.0.133:3001/orders', {
+      const res = await fetch('http://localhost:3001/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...order, userId: String(order.userId) }),

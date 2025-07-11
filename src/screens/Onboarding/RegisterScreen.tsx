@@ -36,7 +36,7 @@ export default function RegisterScreen({ navigation, setIsAuthenticated }: any) 
       return;
     }
     try {
-      const res = await fetch('http://192.168.0.133:3001/users', {
+      const res = await fetch('http://localhost:3001/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, email }),

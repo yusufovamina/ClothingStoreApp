@@ -33,7 +33,6 @@ export default function ProfileScreen({ navigation, setIsAuthenticated }: any) {
     if (user && user.photo && user.photo.startsWith('http')) {
       return { uri: user.photo };
     }
-    // Return undefined instead of null
     return undefined;
   };
 
@@ -48,7 +47,7 @@ export default function ProfileScreen({ navigation, setIsAuthenticated }: any) {
             <Icon name="user" size={48} color="#AAA" />
           </View>
         )}
-        <Text style={[styles.userName, { color: colors.text }]}>{user ? user.username : '—'}</Text>
+        <Text style={[styles.userName, { color: colors.text }]}>{user ? user.username : '\u2014'}</Text>
         <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user ? user.email : ''}</Text>
       </View>
 
@@ -83,7 +82,7 @@ export default function ProfileScreen({ navigation, setIsAuthenticated }: any) {
                 {order.items.map((item, idx) => (
                   <View key={idx} style={{ flexDirection: 'row', marginLeft: 8 }}>
                     <Text style={{ color: colors.text, fontSize: 13 }}>- </Text>
-                    <Text style={{ color: colors.text, fontSize: 13 }}>{String(item.title)} × {String(item.quantity)} ({String(item.size || '-')}, {String(item.color || '-')})</Text>
+                    <Text style={{ color: colors.text, fontSize: 13 }}>{String(item.title)} \u00d7 {String(item.quantity)} ({String(item.size || '-')}, {String(item.color || '-')})</Text>
                   </View>
                 ))}
               </View>
@@ -141,7 +140,7 @@ function ModalView({ onClose, title, children }: { onClose: () => void, title: s
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={modalStyles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={[modalStyles.modalBox, { backgroundColor: colors.card }]}> {/* Use theme card color */}
+            <View style={[modalStyles.modalBox, { backgroundColor: colors.card }]}>
               <Text style={[modalStyles.title, { color: colors.accent }]}>{title}</Text>
               {React.Children.map(children, child =>
                 (typeof child === 'string' || typeof child === 'number') ? <Text style={{ color: colors.text }}>{child}</Text> : child

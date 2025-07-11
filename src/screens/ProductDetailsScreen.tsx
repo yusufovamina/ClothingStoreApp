@@ -43,19 +43,16 @@ export default function ProductDetailsScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 40 }}>
-      {/* Image and overlay buttons */}
       <View style={[styles.imageWrapperLarge, { backgroundColor: colors.card }]}>
         <Image source={product.image} style={styles.imageLarge} resizeMode="cover" />
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#222" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.favoriteBtn} onPress={() => toggleFavourite(product.id)}>
-          <Text style={{ fontSize: 22, color: isFavourite(product.id) ? '#E53935' : '#222' }}>{isFavourite(product.id) ? '♥' : '♡'}</Text>
+          <Text style={{ fontSize: 22, color: isFavourite(product.id) ? '#E53935' : '#222' }}>{isFavourite(product.id) ? '\u2665' : '\u2661'}</Text>
         </TouchableOpacity>
       </View>
-      {/* Info section */}
       <View style={[styles.infoSection, { backgroundColor: colors.card, shadowColor: colors.text }]}>
-        {/* Title and quantity row */}
         <View style={styles.titleQtyRow}>
           <Text style={[styles.title, { color: colors.text }]}>{product.title}</Text>
           <View style={styles.qtyRowInline}>
@@ -68,15 +65,12 @@ export default function ProductDetailsScreen() {
             </TouchableOpacity>
           </View>
         </View>
-        {/* Rating and reviews */}
         <View style={styles.ratingRow}>
-          <Text style={styles.star}>★</Text>
+          <Text style={styles.star}>\u2605</Text>
           <Text style={[styles.rating, { color: colors.text === '#fff' ? '#fff' : '#000' }]}>{product.rating}</Text>
           <Text style={styles.reviews}>({product.reviews?.toLocaleString() || '0'} reviews)</Text>
         </View>
-        {/* Description */}
         <Text style={[styles.desc, { color: colors.textSecondary }]}>{product.description}</Text>
-        {/* Size selector */}
         <View style={styles.selectorBlock}>
           <Text style={[styles.selectorLabel, { color: colors.text }]}>Choose Size</Text>
           <View style={styles.sizeRowBlock}>
@@ -91,7 +85,6 @@ export default function ProductDetailsScreen() {
             ))}
           </View>
         </View>
-        {/* Color selector */}
         <View style={styles.selectorBlock}>
           <Text style={[styles.selectorLabel, { color: colors.text }]}>Color</Text>
           <View style={styles.colorRowBlock}>
@@ -104,7 +97,6 @@ export default function ProductDetailsScreen() {
             ))}
           </View>
         </View>
-        {/* Add to Cart button */}
         <TouchableOpacity style={[styles.addToCartBtn, { backgroundColor: colors.accent }]} onPress={handleAddToCart}>
           <Text style={[styles.addToCartText, { color: colors.card }]}>{`Add to Cart | $${(product.price * quantity).toFixed(2)}`}</Text>
           {product.oldPrice && (
